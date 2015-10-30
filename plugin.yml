@@ -1,0 +1,13 @@
+main: me.venomouspenguin.antcraft.creative.core.Main
+version: 0.0.1
+authors: [SavagePenguins]
+name: Antcraft-Roleplay
+
+commands:
+  roleplay:
+    aliases: [rp]
+    description: The roleplay command
+permissions:
+  antcraft.user.roleplay:
+    description: The perm
+    default: true

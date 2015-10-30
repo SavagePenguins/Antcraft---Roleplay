@@ -1,0 +1,9 @@
+antcraft:
+  creative:
+    core:
+      #Logo for chat messages
+      logo: "&8(&c&lAntcraft&8)"
+      roleplay-chat-logo: "&e(&aRoleplay Chat&e)"
+      #Max and min slots
+      min-slots: 4
+      max-slots: 10
