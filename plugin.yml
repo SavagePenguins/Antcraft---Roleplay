@@ -9,5 +9,8 @@ commands:
     description: The roleplay command
 permissions:
   antcraft.user.roleplay:
-    description: The perm
+    description: The perm to access normal commands
+    default: true
+  antcraft.staff.roleplay.admin:
+    description: The perm to access admin commands
     default: true

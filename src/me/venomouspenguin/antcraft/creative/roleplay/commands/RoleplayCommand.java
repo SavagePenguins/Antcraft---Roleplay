@@ -4,6 +4,7 @@ import me.venomouspenguin.antcraft.creative.core.Main;
 import me.venomouspenguin.antcraft.creative.core.SettingsManager;
 import me.venomouspenguin.antcraft.creative.core.methods.UsefulMethods;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -41,7 +42,8 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					p.sendMessage(ChatColor.YELLOW + "-=-=-= " + ChatColor.AQUA + "Roleplay" + ChatColor.YELLOW + " =-=-=-");
 					p.sendMessage(ChatColor.YELLOW + "To create a roleplay - " + ChatColor.AQUA + "/rp create <slots> <type> <name>");
 					p.sendMessage(ChatColor.YELLOW + "To join a roleplay - " + ChatColor.AQUA + "/rp join <name>");
-					p.sendMessage(ChatColor.YELLOW + "To leave a roleplay - " + ChatColor.AQUA + "/rp leave <name>");
+					p.sendMessage(ChatColor.YELLOW + "To leave a roleplay - " + ChatColor.AQUA + "/rp leave");
+					p.sendMessage(ChatColor.YELLOW + "To kick a player form the roleplay - " + ChatColor.AQUA + "/rp kick <player>");
 					p.sendMessage(ChatColor.YELLOW + "To list current roleplays - " + ChatColor.AQUA + "/rp list");
 					p.sendMessage(ChatColor.YELLOW + "To get info about a roleplay - " + ChatColor.AQUA + "/rp info <name>");
 					p.sendMessage(ChatColor.YELLOW + "To toggle into roleplay chat - " + ChatColor.AQUA + "/rp chat <on | off>");
@@ -52,7 +54,7 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 			//Create command
 			if(args[0].equalsIgnoreCase("create"))
 			{
-				if(args.length < 0 && args.length >= 3)
+				if(args.length <= 3)
 				{
 					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp create <slots> <type> <name>");
 					return true;
@@ -95,11 +97,12 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				ChatColor.AQUA + type);
 				
 				plugin.rp.put(name, p.getName());
-				settings.getRoleplayConfig().set("antcraft.creative.roleplay." + p.getUniqueId() + ".current-roleplay", name);
+				plugin.rpTag.put(p.getName(), "");
 				plugin.rpSlots.put(name, slots);
 				plugin.rpLeader.put(name, p.getName());
 				plugin.rpType.put(name, type);
 				plugin.rpChatOff.put(name, p.getName());
+				plugin.rpName.put(p.getName(), name);
 				return true;
 			}
 			
@@ -130,69 +133,66 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				if(plugin.rp.get(rpName).size() >= plugin.rpSlots.get(rpName))
 				{
 					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Rp size has past capcity");
-					return true;
+					return true;	
 				}
-				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have joined " + rpName);
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have joined: " + ChatColor.AQUA + rpName);
 				plugin.rp.put(rpName, p.getName());
 				//Puts the player in the viewable chat
 				plugin.rpChatOff.put(rpName, p.getName());
-				settings.getRoleplayConfig().set("antcraft.creative.roleplay." + p.getUniqueId() + ".current-roleplay", rpName);
-				settings.saveRoleplayConfig();
+				plugin.rpName.put(p.getName(), rpName);
+				plugin.rpTag.put(p.getName(), "");
 				//Send message to others
 				return true;
 			}
 			
 			if(args[0].equalsIgnoreCase("leave"))
 			{
-				if(args.length == 1)
-				{
-					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp leave <name>");
-					return true;
-				}
-				
-				String rpName = "";
-				
-				for(int i = 1; i < args.length; i++)
-				{
-					rpName += args[i] + " ";
-				}
-				
-				if(!(plugin.rp.containsValue(p.getName())))
+				String senderName = p.getName();
+				if(!(plugin.rp.containsValue(senderName)))
 				{
 					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not in a roleplay");
 					return true;
 				}
 				
-				if(!(plugin.rp.containsKey(rpName)))
+				String rpName = plugin.rpName.get(senderName);
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have left the roleplay: " + ChatColor.AQUA + rpName);
+				
+				plugin.rp.get(rpName).remove(senderName);
+				plugin.rpChatOff.get(rpName).remove(senderName);
+				plugin.rpTag.remove(senderName);
+				plugin.rpName.remove(senderName);
+				
+				for(Player all : Bukkit.getServer().getOnlinePlayers())
 				{
-					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "No roleplay named: " + ChatColor.AQUA + rpName);
-					return true;
+					if(plugin.rp.get(rpName).contains(all.getName()))
+					{
+						all.sendMessage(plugin.LOGO + ChatColor.AQUA + senderName + ChatColor.YELLOW + " has left the roleplay");
+					}
 				}
 				
-				
-				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have left roleplay: " + ChatColor.AQUA + rpName);
-				plugin.rp.remove(rpName, p.getName());
-				//Takes the player out of the viewable chat
-				plugin.rpChatOff.remove(rpName, p.getName());
-				settings.getRoleplayConfig().set("antcraft.creative.roleplay." + p.getUniqueId() + ".current-roleplay", null);
-				settings.saveRoleplayConfig();
-				settings.reloadRoleplayConfig();
 				if(plugin.rp.get(rpName).isEmpty())
 				{
-					plugin.rp.remove(rpName, p.getName());
+					plugin.rp.remove(rpName, null);
+					plugin.rpChat.remove(rpName, null);
+					plugin.rpChatOff.remove(rpName, null);
+					plugin.rpSlots.remove(rpName);
 					plugin.rpLeader.remove(rpName);
 					plugin.rpType.remove(rpName);
-					plugin.rpSlots.remove(rpName);
 					return true;
 				}
 				
-				//Send message to others
 				return true;
 			}
 			
 			
 			if(args[0].equalsIgnoreCase("info"))
 			{
+				if(args.length == 1)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You must specify a roleplay name");
+					return true;
+				}
+				
 				String rpName = "";
 				
 				for(int i = 1; i < args.length; i++)
@@ -205,6 +205,7 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "No roleplay named: " + ChatColor.AQUA + rpName);
 					return true;
 				}
+				
 				
 				p.sendMessage(ChatColor.YELLOW + "-=-=-= " + ChatColor.AQUA + rpName + "Info" + ChatColor.YELLOW + " =-=-=-");
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Roleplay Leader: " + ChatColor.AQUA + plugin.rpLeader.get(rpName));
@@ -214,15 +215,17 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Slots: " + ChatColor.AQUA + "[" + plugin.rp.get(rpName).size() + "/" + plugin.rpSlots.get(rpName) + "]");
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Type: " + ChatColor.AQUA + plugin.rpType.get(rpName));
+				
 				StringBuilder builder = new StringBuilder();
 				for(String name : plugin.rp.get(rpName))
 				{
-				   builder.append((builder.length() > 0 ? ChatColor.YELLOW + ", " + ChatColor.AQUA : "") + name);
+					String rpTag = plugin.rpTag.get(name);
+					builder.append((builder.length() > 0 ? ChatColor.YELLOW + ", " + ChatColor.AQUA : "") + rpTag + " " + ChatColor.AQUA + name);
 				}
 				String names = builder.toString();
 				
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Players In Roleplay: ");
-				p.sendMessage(plugin.LOGO + ChatColor.AQUA + names);
+				p.sendMessage(plugin.LOGO_NO_SPACE + ChatColor.AQUA + names);
 				return true;
 			}
 			
@@ -256,22 +259,19 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 			{
 				if(args.length == 1)
 				{
-					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp chat <on | off> <name>");
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp chat <on | off>");
+					return true;
+				}
+				if(plugin.rpName.get(p.getName()) == null || !(plugin.rpName.containsKey(p.getName())))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not in a roleplay");
+					return true;
 				}
 				
-				String rpName = "";
-				for(int i = 2; i < args.length; i++)
-				{
-					rpName += args[i] + " ";
-				}
+				String rpName = plugin.rpName.get(p.getName());
 				
 				if(args[1].equalsIgnoreCase("on"))
 				{
-					if(!(plugin.rp.get(rpName).contains(p.getName())))
-					{
-						p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not in that roleplay");
-						return true;
-					}
 					if(plugin.rpChat.get(rpName).contains(p.getName()))
 					{
 						p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You already have roleplay chat toggled on");
@@ -300,10 +300,118 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					plugin.rpChatOff.put(rpName, p.getName());
 					return true;
 				}
+				
 				return true;
 			}
 			
-			p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Command");
+			if(args[0].equalsIgnoreCase("settag"))
+			{
+				if(args.length == 1)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp settag <player> <tag>");
+					return true;
+				}
+			
+				String senderName = p.getName();
+				
+				if(!(plugin.rpName.containsKey(senderName)))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not in a roleplay");
+					return true;
+				}
+				
+				String rpName = plugin.rpName.get(senderName);
+				
+				if(!(plugin.rpLeader.get(rpName).contains(senderName)))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not the leader of the roleplay");
+					return true;
+				}
+				
+				@SuppressWarnings("deprecation")
+				Player player =  Bukkit.getServer().getPlayer(args[1]);
+				
+				if(player == null)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Player not found"); 
+					return true;
+				}
+				
+				String playerName = player.getName();
+				
+				if(!(plugin.rp.get(rpName)).contains(playerName))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "The player is not part of this roleplay");
+					return true;
+				}
+				
+				if(args.length == 2)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp settag <player> <tag>");
+					return true;
+				}
+				String tag = ChatColor.WHITE + " [" + args[2].replace("&", "§") + ChatColor.WHITE + "]";
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have changed player, " + ChatColor.AQUA + playerName + ChatColor.YELLOW + ", tag to:" + ChatColor.AQUA + tag);
+				plugin.rpTag.put(playerName, tag);
+				return true;
+			}
+			
+			if(args[0].equalsIgnoreCase("kick"))
+			{
+				if(args.length == 1)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp kick <player>");
+					return true;
+				}
+				
+				String senderName = p.getName();
+				
+				if(!(plugin.rpName.containsKey(senderName)))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not in a roleplay");
+					return true;
+				}
+				
+				String rpName = plugin.rpName.get(p.getName());
+				@SuppressWarnings("deprecation")
+				Player player = Bukkit.getServer().getPlayer(args[1]);
+				
+				if(player == null)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Player not found");
+					return true;
+				}
+				
+				String playerName = player.getName();
+				
+				if(!(plugin.rpLeader.get(rpName).contains(senderName)))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not the leader of the roleplay");
+					return true;
+				}
+				
+				if(!(plugin.rp.get(rpName).contains(playerName)))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "The player is not in your roleplay");
+					return true;
+				}
+				if(playerName.equals(senderName))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You can not kick yourself");
+					return true;
+				}
+				
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have kicked: " + ChatColor.AQUA + playerName);
+				player.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have been kicked out of: " + rpName);
+			
+				plugin.rp.get(rpName).remove(playerName);
+				plugin.rpTag.remove(playerName);
+				plugin.rpChatOff.remove(rpName, playerName);
+				plugin.rpName.remove(playerName);
+				return true;
+			}
+			
+			p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "To get help - /rp help");
 			return true;
 		}
 		p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Missing Permissions");

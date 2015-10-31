@@ -3,7 +3,6 @@ package me.venomouspenguin.antcraft.creative.core;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
-import me.venomouspenguin.antcraft.creative.core.listeners.ProfileGeneration;
 import me.venomouspenguin.antcraft.creative.roleplay.commands.RoleplayCommand;
 import me.venomouspenguin.antcraft.creative.roleplay.listeners.RoleplayChat;
 
@@ -19,6 +18,7 @@ public class Main extends JavaPlugin{
 
 	//Logo for plugin as it sends in game messages
 	public String LOGO = getConfig().getString("antcraft.creative.core.logo").replace("&", "§") + ChatColor.RESET + " ";
+	public String LOGO_NO_SPACE = getConfig().getString("antcraft.creative.core.logo").replace("&", "§") + ChatColor.RESET;
 	public String ROLEPLAY_LOGO = getConfig().getString("antcraft.creative.core.roleplay-chat-logo").replace("&", "§") + ChatColor.RESET + " ";
 	
 	SettingsManager settings = SettingsManager.getInstance();
@@ -31,13 +31,15 @@ public class Main extends JavaPlugin{
 	public HashMap<String, Integer> rpSlots = new HashMap<String, Integer>();
 	public HashMap<String, String> rpLeader = new HashMap<String, String>();
 	public HashMap<String, String> rpType = new HashMap<String, String>();
+	public HashMap<String, String> rpName = new HashMap<String, String>();
+	public HashMap<String, String> rpTag = new HashMap<String, String>();
+	
 	
 	public void onEnable()
 	{
 		PluginDescriptionFile pdf = getDescription();
 		Logger log = getLogger();
 		
-		settings.setup(this);
 		saveDefaultConfig();
 		
 		//Random but informative messages : >
@@ -48,8 +50,8 @@ public class Main extends JavaPlugin{
 		log.info(" Enabling commands needed");
 		getCommand("roleplay").setExecutor(new RoleplayCommand(this));
 		
-		Bukkit.getServer().getPluginManager().registerEvents(new ProfileGeneration(), this);
 		Bukkit.getServer().getPluginManager().registerEvents(new RoleplayChat(this), this);
+		
 	}
 	
 	public void onDisable()
