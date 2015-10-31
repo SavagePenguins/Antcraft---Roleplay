@@ -48,6 +48,7 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					p.sendMessage(ChatColor.YELLOW + "To get info about a roleplay - " + ChatColor.AQUA + "/rp info <name>");
 					p.sendMessage(ChatColor.YELLOW + "To toggle into roleplay chat - " + ChatColor.AQUA + "/rp chat <on | off>");
 					p.sendMessage(ChatColor.YELLOW + "To set a players tag - " + ChatColor.AQUA + "/rp tag <player> <tag>");
+					p.sendMessage(ChatColor.YELLOW + "To see plugin info - " + ChatColor.AQUA + "/rp plugin-info");
 					return true;
 			}
 				
@@ -57,6 +58,12 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				if(args.length <= 3)
 				{
 					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp create <slots> <type> <name>");
+					return true;
+				}
+				
+				if(plugin.rp.containsValue(p.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are already in a roleplay");
 					return true;
 				}
 				
@@ -135,12 +142,23 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Rp size has past capcity");
 					return true;	
 				}
+				
+				for(Player all : Bukkit.getServer().getOnlinePlayers())
+				{
+					if(plugin.rp.get(rpName).contains(all.getName()))
+					{
+						all.sendMessage(plugin.LOGO + ChatColor.AQUA + p.getName() + ChatColor.YELLOW + " has joined the roleplay");
+					}
+				}
+				
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have joined: " + ChatColor.AQUA + rpName);
 				plugin.rp.put(rpName, p.getName());
 				//Puts the player in the viewable chat
 				plugin.rpChatOff.put(rpName, p.getName());
 				plugin.rpName.put(p.getName(), rpName);
 				plugin.rpTag.put(p.getName(), "");
+				
+
 				//Send message to others
 				return true;
 			}
@@ -402,12 +420,31 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				}
 				
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have kicked: " + ChatColor.AQUA + playerName);
-				player.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have been kicked out of: " + rpName);
+				player.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have been kicked out of: " + ChatColor.AQUA + rpName);
 			
 				plugin.rp.get(rpName).remove(playerName);
 				plugin.rpTag.remove(playerName);
 				plugin.rpChatOff.remove(rpName, playerName);
 				plugin.rpName.remove(playerName);
+			
+				for(Player all : Bukkit.getServer().getOnlinePlayers())
+				{
+					if(plugin.rp.get(rpName).contains(all.getName()))
+					{
+						all.sendMessage(plugin.LOGO + ChatColor.AQUA + player.getName() + ChatColor.YELLOW + " has been kicked from the roleplay");
+					}
+				}
+				
+				return true;
+			}
+			
+			if(args[0].equalsIgnoreCase("plugin-info"))
+			{
+				p.sendMessage(ChatColor.YELLOW + "-=-=-= " + ChatColor.AQUA + "Plugin Info " + ChatColor.YELLOW + "=-=-=-");
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Developer: " + ChatColor.AQUA + "SavagePenguins");
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Version: " + ChatColor.AQUA + "1.0");
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Suggested By: " + ChatColor.AQUA + "RawrItsNicole");
+				p.sendMessage(ChatColor.YELLOW + "Any bugs to report please send me a screenshot on the forums by starting a conversation with me or KingDragonRider");
 				return true;
 			}
 			
