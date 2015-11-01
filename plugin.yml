@@ -1,5 +1,5 @@
 main: me.venomouspenguin.antcraft.creative.core.Main
-version: 0.0.1
+version: 1.0.1
 authors: [SavagePenguins]
 name: Antcraft-Roleplay
 
@@ -10,7 +10,10 @@ commands:
 permissions:
   antcraft.user.roleplay:
     description: The perm to access normal commands
-    default: true
+    default: false
   antcraft.staff.roleplay.admin:
     description: The perm to access admin commands
-    default: true
+    default: false
+  antcraft.staff.roleplay.admin.chat:
+    description: The perm to toggle on and off roleplay spy
+    default: false

@@ -1,7 +1,6 @@
 package me.venomouspenguin.antcraft.creative.roleplay.commands;
 
 import me.venomouspenguin.antcraft.creative.core.Main;
-import me.venomouspenguin.antcraft.creative.core.SettingsManager;
 import me.venomouspenguin.antcraft.creative.core.methods.UsefulMethods;
 
 import org.bukkit.Bukkit;
@@ -14,7 +13,6 @@ import org.bukkit.entity.Player;
 public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 
 	private Main plugin;
-	SettingsManager settings = SettingsManager.getInstance();
 	
 	public RoleplayCommand(Main plugin)
 	{
@@ -32,7 +30,6 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 
 		//Safe casting
 		Player p = (Player) sender;
-		
 		if(hasUserPermission(p, "roleplay"))
 		{
 			//Help command
@@ -174,6 +171,28 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				
 				String rpName = plugin.rpName.get(senderName);
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have left the roleplay: " + ChatColor.AQUA + rpName);
+				
+				if(plugin.rpLeader.get(rpName).contains(senderName))
+				{
+					for(Player all : Bukkit.getServer().getOnlinePlayers())
+					{
+						if(plugin.rp.get(rpName).contains(all.getName()))
+						{
+							all.sendMessage(plugin.LOGO + ChatColor.YELLOW + "The leader has left the roleplay so it has been disbanded");
+							plugin.rp.get(rpName).remove(all.getName());
+							plugin.rpChatOff.get(rpName).remove(all.getName());
+							plugin.rpTag.remove(all.getName());
+							plugin.rpName.remove(all.getName());
+							plugin.rp.remove(rpName, null);
+							plugin.rpChat.remove(rpName, null);
+							plugin.rpChatOff.remove(rpName, null);
+							plugin.rpSlots.remove(rpName);
+							plugin.rpLeader.remove(rpName);
+							plugin.rpType.remove(rpName);
+						}
+					}
+					
+				}
 				
 				plugin.rp.get(rpName).remove(senderName);
 				plugin.rpChatOff.get(rpName).remove(senderName);
@@ -442,17 +461,63 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 			{
 				p.sendMessage(ChatColor.YELLOW + "-=-=-= " + ChatColor.AQUA + "Plugin Info " + ChatColor.YELLOW + "=-=-=-");
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Developer: " + ChatColor.AQUA + "SavagePenguins");
-				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Version: " + ChatColor.AQUA + "1.0");
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Version: " + ChatColor.AQUA + "1.0.1");
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Suggested By: " + ChatColor.AQUA + "RawrItsNicole");
 				p.sendMessage(ChatColor.YELLOW + "Any bugs to report please send me a screenshot on the forums by starting a conversation with me or KingDragonRider");
 				return true;
 			}
+
 			
+			if(hasStaffPermission(p, "roleplay.admin"))
+			{
+				if (args[0].equalsIgnoreCase("admin")) 
+				{
+					if(args.length == 1)
+					{
+						p.sendMessage(ChatColor.YELLOW + "-=-=-= " + ChatColor.AQUA + "Roleplay Admin" + ChatColor.YELLOW + " =-=-=-");
+						p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "To toggle roleplay chat spy - " + ChatColor.AQUA + "/rp admin chat <on | off>");
+						return true;
+					}
+					if(args[1].equalsIgnoreCase("chat") && hasStaffPermission(p, "roleplay.admin.chat"))
+					{
+						if(args.length == 2)
+						{
+							p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp admin chat <on | off>");
+							return true;
+						}
+						
+						if(args[2].equalsIgnoreCase("on"))
+						{
+							if(plugin.rpAdminChat.containsKey(p.getName()))
+							{
+								p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You already have roleplay spy on");
+								return true;
+							}
+							
+							p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have toggled on roleplay spy");
+							plugin.rpAdminChat.put(p.getName(), true);
+							return true;
+						}
+						
+						if(args[2].equalsIgnoreCase("off"))
+						{
+							if(!plugin.rpAdminChat.containsKey(p.getName()))
+							{
+								p.sendMessage(plugin.LOGO + ChatColor.RED + "You already have roleplay spy off");
+								return true;
+							}
+							
+							p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have toggled off roleplay spy");
+							plugin.rpAdminChat.remove(p.getName());
+							return true;
+						}
+					}
+				}
+			}else { p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Missing Permissions"); return true;}
 			p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "To get help - /rp help");
 			return true;
 		}
 		p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Missing Permissions");
 		return false;
 	}
-
-}
+   }

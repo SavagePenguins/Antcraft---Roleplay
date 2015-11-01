@@ -1,7 +1,6 @@
 package me.venomouspenguin.antcraft.creative.roleplay.listeners;
 
 import me.venomouspenguin.antcraft.creative.core.Main;
-import me.venomouspenguin.antcraft.creative.core.SettingsManager;
 import me.venomouspenguin.antcraft.creative.core.methods.UsefulMethods;
 
 import org.bukkit.Bukkit;
@@ -14,7 +13,6 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 public class RoleplayChat extends UsefulMethods implements Listener{
 
 	private Main plugin;
-	SettingsManager settings = SettingsManager.getInstance();
 	
 	public RoleplayChat(Main plugin)
 	{
@@ -42,8 +40,13 @@ public class RoleplayChat extends UsefulMethods implements Listener{
 				{
 					all.sendMessage(plugin.ROLEPLAY_LOGO + ChatColor.AQUA + rpTag + " " +ChatColor.AQUA + p.getDisplayName() + ChatColor.RED + " > " + ChatColor.AQUA + e.getMessage());
 				}
+				if(plugin.rpAdminChat.containsKey(all.getName()))
+				{
+					all.sendMessage(plugin.LOGO + ChatColor.WHITE + "[" + ChatColor.YELLOW + "Roleplay Spy" + ChatColor.WHITE + "] " + p.getDisplayName() + ChatColor.RED + " > " + ChatColor.AQUA + e.getMessage());
+				}
 			}
 		}
+		
 	}
 
 }
