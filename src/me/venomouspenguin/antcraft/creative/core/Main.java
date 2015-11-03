@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import me.venomouspenguin.antcraft.creative.roleplay.commands.RoleplayCommand;
 import me.venomouspenguin.antcraft.creative.roleplay.listeners.RoleplayChat;
 import me.venomouspenguin.antcraft.creative.roleplay.listeners.RoleplayLeaderLeave;
+import me.venomouspenguin.antcraft.creative.roleplay.listeners.RoleplayMemberLeave;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -27,6 +28,7 @@ public class Main extends JavaPlugin{
 	public Multimap<String, String> rp = ArrayListMultimap.create();
 	public Multimap<String, String> rpChat = ArrayListMultimap.create();
 	public Multimap<String, String> rpChatOff = ArrayListMultimap.create();
+	public Multimap<String, String> rpDeniedList = ArrayListMultimap.create();
 	
 	public HashMap<String, Integer> rpSlots = new HashMap<String, Integer>();
 	public HashMap<String, String> rpLeader = new HashMap<String, String>();
@@ -44,15 +46,16 @@ public class Main extends JavaPlugin{
 		saveDefaultConfig();
 		
 		//Random but informative messages : >
-		log.info(" Enabling Roleplay Plugin");
-		log.info(" This plugin is currently on version: " + pdf.getVersion());
-		log.info(" This plugin was created by: " + pdf.getAuthors());
+		log.info("Enabling Roleplay Plugin");
+		log.info("This plugin is currently on version: " + pdf.getVersion());
+		log.info("This plugin was created by: " + pdf.getAuthors());
 				
-		log.info(" Enabling commands needed");
+		log.info("Enabling commands needed");
 		getCommand("roleplay").setExecutor(new RoleplayCommand(this));
 		
 		Bukkit.getServer().getPluginManager().registerEvents(new RoleplayChat(this), this);
 		Bukkit.getServer().getPluginManager().registerEvents(new RoleplayLeaderLeave(this), this);
+		Bukkit.getServer().getPluginManager().registerEvents(new RoleplayMemberLeave(this), this);
 	}
 	
 	public void onDisable()

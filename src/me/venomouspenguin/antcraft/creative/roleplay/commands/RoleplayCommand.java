@@ -19,6 +19,7 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 		this.plugin = plugin;
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 	
@@ -43,8 +44,10 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					p.sendMessage(ChatColor.YELLOW + "To kick a player form the roleplay - " + ChatColor.AQUA + "/rp kick <player>");
 					p.sendMessage(ChatColor.YELLOW + "To list current roleplays - " + ChatColor.AQUA + "/rp list");
 					p.sendMessage(ChatColor.YELLOW + "To get info about a roleplay - " + ChatColor.AQUA + "/rp info <name>");
-					p.sendMessage(ChatColor.YELLOW + "To toggle into roleplay chat - " + ChatColor.AQUA + "/rp chat <on | off>");
-					p.sendMessage(ChatColor.YELLOW + "To set a players tag - " + ChatColor.AQUA + "/rp tag <player> <tag>");
+					p.sendMessage(ChatColor.YELLOW + "To toggle into roleplay chat - " + ChatColor.AQUA + "/rp chat <on | off | [message]>");
+					p.sendMessage(ChatColor.YELLOW + "To block a player from the roleplay - " + ChatColor.AQUA + "/rp block <player>");
+					p.sendMessage(ChatColor.YELLOW + "To un-block a player from the roleplay - " + ChatColor.AQUA + "/rp un-block <player>");
+					p.sendMessage(ChatColor.YELLOW + "To set a players tag - " + ChatColor.AQUA + "/rp settag <player> <tag>");
 					p.sendMessage(ChatColor.YELLOW + "To see plugin info - " + ChatColor.AQUA + "/rp plugin-info");
 					return true;
 			}
@@ -139,6 +142,11 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Rp size has past capcity");
 					return true;	
 				}
+				if(plugin.rpDeniedList.get(rpName).contains(p.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are denied from this roleplay");
+					return true;
+				}
 				
 				for(Player all : Bukkit.getServer().getOnlinePlayers())
 				{
@@ -178,27 +186,29 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					{
 						if(plugin.rp.get(rpName).contains(all.getName()))
 						{
-							all.sendMessage(plugin.LOGO + ChatColor.YELLOW + "The leader has left the roleplay so it has been disbanded");
-							plugin.rp.get(rpName).remove(all.getName());
-							plugin.rpChatOff.get(rpName).remove(all.getName());
-							plugin.rpTag.remove(all.getName());
-							plugin.rpName.remove(all.getName());
-							plugin.rp.remove(rpName, null);
-							plugin.rpChat.remove(rpName, null);
-							plugin.rpChatOff.remove(rpName, null);
+							all.sendMessage(plugin.LOGO + ChatColor.YELLOW + "The leader has left the roleplay");
+							all.sendMessage(plugin.LOGO + ChatColor.YELLOW + "The roleplay has been disbanded");
+							
+							plugin.rp.get(rpName).clear();
+							plugin.rpChat.get(rpName).clear();
+							plugin.rpChatOff.get(rpName).clear();
+							plugin.rpDeniedList.get(rpName).clear();
 							plugin.rpSlots.remove(rpName);
-							plugin.rpLeader.remove(rpName);
+							plugin.rpTag.remove(senderName);
 							plugin.rpType.remove(rpName);
+							plugin.rpName.remove(all.getName());
+							plugin.rpLeader.remove(rpName);
+							return true;
 						}
 					}
-					
 				}
 				
 				plugin.rp.get(rpName).remove(senderName);
+				plugin.rpChat.get(rpName).remove(senderName);
 				plugin.rpChatOff.get(rpName).remove(senderName);
 				plugin.rpTag.remove(senderName);
 				plugin.rpName.remove(senderName);
-				
+
 				for(Player all : Bukkit.getServer().getOnlinePlayers())
 				{
 					if(plugin.rp.get(rpName).contains(all.getName()))
@@ -209,9 +219,10 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				
 				if(plugin.rp.get(rpName).isEmpty())
 				{
-					plugin.rp.remove(rpName, null);
-					plugin.rpChat.remove(rpName, null);
-					plugin.rpChatOff.remove(rpName, null);
+					plugin.rp.remove(rpName, p.getName());
+					plugin.rpChat.remove(rpName, p.getName());
+					plugin.rpChatOff.remove(rpName, p.getName());
+					plugin.rpDeniedList.get(rpName).clear();
 					plugin.rpSlots.remove(rpName);
 					plugin.rpLeader.remove(rpName);
 					plugin.rpType.remove(rpName);
@@ -296,7 +307,7 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 			{
 				if(args.length == 1)
 				{
-					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp chat <on | off>");
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp chat <on | off | [message]>");
 					return true;
 				}
 				if(plugin.rpName.get(p.getName()) == null || !(plugin.rpName.containsKey(p.getName())))
@@ -338,6 +349,33 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					return true;
 				}
 				
+				String message = "";
+				for(int i = 1; i < args.length; i++)
+				{
+					message += args[i] + " ";
+				}
+				
+				String rpTag = plugin.rpTag.get(p.getName());
+				if(plugin.rpChat.get(rpName).contains(p.getName()) || plugin.rpChatOff.get(rpName).contains(p.getName()))
+				{
+					for(Player all : Bukkit.getServer().getOnlinePlayers())
+					{
+						if(plugin.rpChatOff.get(rpName).contains(all.getName()))
+						{
+							all.sendMessage(plugin.ROLEPLAY_LOGO + ChatColor.AQUA + rpTag + " " + ChatColor.AQUA + p.getDisplayName() + ChatColor.RED + " > " + ChatColor.AQUA + message);
+						}
+						if(plugin.rpChat.get(rpName).contains(all.getName()))
+						{
+							all.sendMessage(plugin.ROLEPLAY_LOGO + ChatColor.AQUA + rpTag + " " + ChatColor.AQUA + p.getDisplayName() + ChatColor.RED + " > " + ChatColor.AQUA + message);
+						}
+						if(plugin.rpAdminChat.containsKey(all.getName()))
+						{
+							all.sendMessage(plugin.LOGO + ChatColor.WHITE + "[" + ChatColor.YELLOW + "Roleplay Spy" + ChatColor.WHITE + "] " + p.getDisplayName() + ChatColor.RED + " > " + ChatColor.AQUA + message);
+						}
+					}
+				}
+
+				
 				return true;
 			}
 			
@@ -365,7 +403,6 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					return true;
 				}
 				
-				@SuppressWarnings("deprecation")
 				Player player =  Bukkit.getServer().getPlayer(args[1]);
 				
 				if(player == null)
@@ -410,7 +447,6 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				}
 				
 				String rpName = plugin.rpName.get(p.getName());
-				@SuppressWarnings("deprecation")
 				Player player = Bukkit.getServer().getPlayer(args[1]);
 				
 				if(player == null)
@@ -439,13 +475,14 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				}
 				
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have kicked: " + ChatColor.AQUA + playerName);
+				p.sendMessage(plugin.LOGO + ChatColor.AQUA + playerName + ChatColor.YELLOW + " has been blocked so they can not return. To unblock /rp un-block <player>");
 				player.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have been kicked out of: " + ChatColor.AQUA + rpName);
 			
 				plugin.rp.get(rpName).remove(playerName);
 				plugin.rpTag.remove(playerName);
 				plugin.rpChatOff.remove(rpName, playerName);
 				plugin.rpName.remove(playerName);
-			
+				plugin.rpDeniedList.put(rpName, playerName);
 				for(Player all : Bukkit.getServer().getOnlinePlayers())
 				{
 					if(plugin.rp.get(rpName).contains(all.getName()))
@@ -457,11 +494,96 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 				return true;
 			}
 			
+			if(args[0].equalsIgnoreCase("block"))
+			{
+				if(args.length == 1)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp block <player>");
+					return true;
+				}
+				
+				if(!plugin.rpName.containsKey(p.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not in a roleplay");
+					return true;
+				}
+				
+				String rpName = plugin.rpName.get(p.getName());
+				
+				if(!plugin.rpLeader.get(rpName).contains(p.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not the leader of the roleplay");
+					return true;
+				}
+				
+				Player player = Bukkit.getServer().getPlayer(args[1]);
+				
+				if(player == null)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Player not found");
+					return true;
+				}
+				if(plugin.rp.get(rpName).contains(player.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Player is in your roleplay");
+					return true;
+				}
+				if(plugin.rpDeniedList.get(rpName).contains(player.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Player is already blocked");
+					return true;
+				}
+				
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have blocked: " + ChatColor.AQUA + player.getName());
+				plugin.rpDeniedList.put(rpName, player.getName());
+				return true;
+			}
+			if(args[0].equalsIgnoreCase("un-block"))
+			{
+				if(args.length == 1)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Incorrect Arguments - /rp un-block <player>");
+					return true;
+				}
+				
+				if(!plugin.rpName.containsKey(p.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not in a roleplay");
+					return true;
+				}
+				
+				String rpName = plugin.rpName.get(p.getName());
+				
+				if(!plugin.rpLeader.get(rpName).contains(p.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "You are not the leader of the roleplay");
+					return true;
+				}
+				
+				Player player = Bukkit.getServer().getPlayer(args[1]);
+				
+				if(player == null)
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Player not found");
+					return true;
+				}
+				
+				if(!plugin.rpDeniedList.get(rpName).contains(player.getName()))
+				{
+					p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Player not in blocked list");
+					return true;
+				}
+				
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "You have un-blocked: " + ChatColor.AQUA + player.getName());
+				plugin.rpDeniedList.remove(rpName, player.getName());
+				return true;
+			}
+
 			if(args[0].equalsIgnoreCase("plugin-info"))
 			{
 				p.sendMessage(ChatColor.YELLOW + "-=-=-= " + ChatColor.AQUA + "Plugin Info " + ChatColor.YELLOW + "=-=-=-");
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Developer: " + ChatColor.AQUA + "SavagePenguins");
-				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Version: " + ChatColor.AQUA + "1.0.1");
+				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Version: " + ChatColor.AQUA + "2.0");
 				p.sendMessage(plugin.LOGO + ChatColor.YELLOW + "Suggested By: " + ChatColor.AQUA + "RawrItsNicole");
 				p.sendMessage(ChatColor.YELLOW + "Any bugs to report please send me a screenshot on the forums by starting a conversation with me or KingDragonRider");
 				return true;
@@ -511,9 +633,10 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 							plugin.rpAdminChat.remove(p.getName());
 							return true;
 						}
-					}
+					}else { p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Missing Permissions"); return true;}
 				}
 			}else { p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "Missing Permissions"); return true;}
+			
 			p.sendMessage(plugin.LOGO + ChatColor.RED + "Error: " + ChatColor.YELLOW + "To get help - /rp help");
 			return true;
 		}

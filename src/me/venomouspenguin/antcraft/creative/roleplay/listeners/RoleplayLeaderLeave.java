@@ -23,6 +23,7 @@ public class RoleplayLeaderLeave implements Listener {
 	{
 		Player p = e.getPlayer();
 		String playerName = p.getName();
+		if(!(plugin.rp.containsValue(playerName))) return;
 		String rpName = plugin.rpName.get(playerName);
 		
 		if(plugin.rpLeader.get(rpName).contains(playerName))
@@ -34,12 +35,12 @@ public class RoleplayLeaderLeave implements Listener {
 					all.sendMessage(plugin.LOGO + ChatColor.YELLOW + "The leader has left the server");
 					all.sendMessage(plugin.LOGO + ChatColor.YELLOW + "The roleplay has been disbanded");
 					plugin.rp.get(rpName).remove(all.getName());
-					plugin.rpChatOff.get(rpName).remove(all.getName());
 					plugin.rpTag.remove(all.getName());
 					plugin.rpName.remove(all.getName());
-					plugin.rp.remove(rpName, null);
-					plugin.rpChat.remove(rpName, null);
-					plugin.rpChatOff.remove(rpName, null);
+					plugin.rp.get(rpName).clear();
+					plugin.rpChat.get(rpName).clear();
+					plugin.rpChatOff.get(rpName).clear();
+					plugin.rpDeniedList.get(rpName).clear();
 					plugin.rpSlots.remove(rpName);
 					plugin.rpLeader.remove(rpName);
 					plugin.rpType.remove(rpName);
