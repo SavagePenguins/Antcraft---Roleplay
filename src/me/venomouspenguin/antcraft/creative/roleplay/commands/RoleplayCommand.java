@@ -226,6 +226,7 @@ public class RoleplayCommand extends UsefulMethods implements CommandExecutor {
 					plugin.rpSlots.remove(rpName);
 					plugin.rpLeader.remove(rpName);
 					plugin.rpType.remove(rpName);
+					plugin.rpDeniedList.get(rpName).clear();
 					return true;
 				}
 				
